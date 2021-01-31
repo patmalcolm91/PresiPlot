@@ -66,7 +66,7 @@ class BarElement(Element):
 
 class DummyElement(Element):
     def __init__(self, *args, **kwargs):
-        super().__init__(None)
+        super().__init__(None, *args, **kwargs)
         self._alpha = None
         self._data = None
         self._scale = None
@@ -90,6 +90,25 @@ class DummyElement(Element):
         self._scale = scale
 
 
+class DummyElement1D(DummyElement):
+    def __init__(self, horizontal=False):
+        super().__init__(horizontal=horizontal)
+
+    def set_full_data(self, data):
+        self._data = data
+
+    def set_data(self, data):
+        idx = 0 if self.horizontal else 1
+        self._data[idx] = data
+
+    def get_full_data(self):
+        return self._data
+
+    def get_data(self):
+        idx = 0 if self.horizontal else 1
+        return self._data[idx]
+
+
 class ElementSeries(list):
     def __init__(self, artist_collection, horizontal=False):
         self.horizontal = horizontal
@@ -100,9 +119,9 @@ class ElementSeries(list):
             self.artists = artist_collection
         elif self._type == matplotlib.collections.PathCollection:
             data = artist_collection.get_offsets()
-            elements = [DummyElement() for _ in range(len(data))]
+            elements = [DummyElement1D(horizontal) for _ in range(len(data))]
             for i, el in enumerate(elements):
-                el.set_data(data[i])
+                el.set_full_data(data[i])
             self.artists = [artist_collection]
         else:
             raise NotImplementedError("Unsupported artist collection type.")
@@ -110,7 +129,7 @@ class ElementSeries(list):
 
     def update(self):
         if self._type == matplotlib.collections.PathCollection:
-            self._artist_collection.set_offsets([el.get_data() for el in self])
+            self._artist_collection.set_offsets([el.get_full_data() for el in self])
 
     def _set_attribute(self, attribute, value):
         if type(value) in [int, float]:

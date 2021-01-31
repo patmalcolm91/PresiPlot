@@ -72,30 +72,6 @@ class SeriesAnimation:
         return self._artists
 
 
-class ScatterPlotAnim:  # TODO: move this functionality to generalized SeriesAnimation class
-    def __init__(self, artist, duration, start_time=0, stagger=0, easer=None):
-        self.artist = artist
-        self.start_time = start_time
-        self.duration = duration
-        self.end_time = start_time + duration
-        self.end_values = self.artist.get_offsets()
-        self.start_values = np.array([[x[0], 0] for x in self.end_values])
-        self.artist.set_offsets(self.start_values)
-        self.stagger = stagger
-        self.easer = easer if easer is not None else ef.LinearInOut()
-        self.update(0)
-
-    def _ease(self, t, v0, v1):
-        alpha = self.easer((t - self.start_time) / self.duration)
-        return v0 + alpha * (v1 - v0)
-
-    def update(self, t):
-        if self.start_time < t <= self.end_time:
-            new_vals = [self._ease(t, x0, x1) for x0, x1 in zip(self.start_values, self.end_values)]
-            self.artist.set_offsets(new_vals)
-        return [self.artist]
-
-
 if __name__ == "__main__":
     bars = plt.bar([1, 2, 3, 4], [3, 2, 5, 8])
     bar_anim = SeriesAnimation(bars, Stagger(0, 20), 100, ef.ElasticEaseOut(), Grow)
@@ -103,11 +79,6 @@ if __name__ == "__main__":
     plt.show()
 
     pts = plt.scatter([1, 2, 3, 4], [3, 2, 5, 8], s=20)
-    scatter_anim = SeriesAnimation(pts, Stagger(0, 20), 100, ef.ElasticEaseOut(), Grow, start_value=(0, 0))
+    scatter_anim = SeriesAnimation(pts, Stagger(0, 20), 100, ef.ElasticEaseOut(), Grow)
     a = FuncAnimation(plt.gcf(), scatter_anim.tick, frames=500, interval=20, blit=True, repeat=False)
-    plt.show()
-
-    pts = plt.scatter([1, 2, 3, 4], [3, 2, 5, 8], s=20)
-    scatter_anim = ScatterPlotAnim(pts, 100, easer=ef.ElasticEaseOut())
-    a = FuncAnimation(plt.gcf(), scatter_anim.update, frames=500, interval=20, blit=True, repeat=False)
     plt.show()
