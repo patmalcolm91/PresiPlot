@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.animation import FuncAnimation
 import easing_functions as ef
-from PresiPlot.Elements import ElementSeries
+from PresiPlot.Elements import Element, ElementSeries
 import itertools
 
 
@@ -16,7 +16,7 @@ class Stagger:
 
 class Animation:
     def __init__(self, element, start, duration, start_value, end_value, easer=None, initialize=True):
-        self.element = element
+        self.element = element  # type: Element
         self.start_time = start
         self.duration = duration
         self.end_time = start + duration
@@ -46,9 +46,41 @@ class DataAnimation(Animation):
             self.element.set_data(self._get_value_at_time(t))
 
 
+class ScaleAnimation(Animation):
+    def initialize(self):
+        self.element.set_scale(self.start_value)
+
+    def tick(self, t):
+        if self.start_time < t <= self.end_time:
+            self.element.set_scale(self._get_value_at_time(t))
+
+
+class AlphaAnimation(Animation):
+    def initialize(self):
+        self.element.set_alpha(self.start_value)
+
+    def tick(self, t):
+        if self.start_time < t <= self.end_time:
+            self.element.set_alpha(self._get_value_at_time(t))
+
+
 class Grow(DataAnimation):
     def __init__(self, element, start, duration, start_value=0, end_value=None, easer=None, initialize=True):
         end_value = element.get_data() if end_value is None else end_value
+        super().__init__(element, start, duration, start_value, end_value, easer, initialize)
+
+
+class Expand(ScaleAnimation):
+    def __init__(self, element, start, duration, start_value=0, end_value=None, easer=None, initialize=True):
+        end_value = element.get_scale() if end_value is None else end_value
+        super().__init__(element, start, duration, start_value, end_value, easer, initialize)
+
+
+class FadeIn(AlphaAnimation):
+    def __init__(self, element, start, duration, start_value=0, end_value=None, easer=None, initialize=True):
+        end_value = element.get_alpha() if end_value is None else end_value
+        if end_value is None:
+            end_value = 1
         super().__init__(element, start, duration, start_value, end_value, easer, initialize)
 
 

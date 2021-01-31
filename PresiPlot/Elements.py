@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.container
 import matplotlib.collections
+from matplotlib.colors import to_rgba
+import warnings
 
 
 class Element:
@@ -15,7 +17,11 @@ class Element:
 
     def set_alpha(self, alpha):
         """Set the transparency value of the artist."""
-        self.artist.set_alpha(alpha)
+        if 0 <= alpha <= 1:
+            self.artist.set_alpha(alpha)
+        else:
+            warnings.warn("Clipping out-of-range alpha value.")
+            self.artist.set_alpha(max(0, min(1, alpha)))
 
     def get_data(self):
         """Get the data value of the artist."""
@@ -119,9 +125,17 @@ class ElementSeries(list):
             self.artists = artist_collection
         elif self._type == matplotlib.collections.PathCollection:
             data = artist_collection.get_offsets()
+            sizes = artist_collection.get_sizes()
+            alphas = artist_collection.get_alpha()
+            if len(sizes) == 1:
+                sizes = np.repeat(sizes[0], len(data))
+            if alphas is None:
+                alphas = np.repeat(1, len(data))
             elements = [DummyElement1D(horizontal) for _ in range(len(data))]
             for i, el in enumerate(elements):
                 el.set_full_data(data[i])
+                el.set_scale(sizes[i])
+                el.set_alpha(alphas[i])
             self.artists = [artist_collection]
         else:
             raise NotImplementedError("Unsupported artist collection type.")
@@ -130,6 +144,12 @@ class ElementSeries(list):
     def update(self):
         if self._type == matplotlib.collections.PathCollection:
             self._artist_collection.set_offsets([el.get_full_data() for el in self])
+            self._artist_collection.set_sizes([el.get_scale() for el in self])
+            colors = self._artist_collection.get_facecolor()
+            if len(colors) == 1:
+                colors = [colors[0] for _ in self]
+            new_colors = [to_rgba(c, max(0, min(1, el.get_alpha()))) for el, c in zip(self, colors)]
+            self._artist_collection.set_color(new_colors)
 
     def _set_attribute(self, attribute, value):
         if type(value) in [int, float]:
