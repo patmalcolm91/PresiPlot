@@ -68,6 +68,7 @@ class SeriesAnimation:
     def tick(self, t):
         for anim in self.animations:
             anim.tick(t)
+        self.elements.update()
         return self._artists
 
 
@@ -102,7 +103,7 @@ if __name__ == "__main__":
     plt.show()
 
     pts = plt.scatter([1, 2, 3, 4], [3, 2, 5, 8], s=20)
-    scatter_anim = SeriesAnimation(pts, Stagger(0, 20), 100, ef.ElasticEaseOut(), Grow)
+    scatter_anim = SeriesAnimation(pts, Stagger(0, 20), 100, ef.ElasticEaseOut(), Grow, start_value=(0, 0))
     a = FuncAnimation(plt.gcf(), scatter_anim.tick, frames=500, interval=20, blit=True, repeat=False)
     plt.show()
 

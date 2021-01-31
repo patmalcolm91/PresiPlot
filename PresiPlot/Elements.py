@@ -108,6 +108,10 @@ class ElementSeries(list):
             raise NotImplementedError("Unsupported artist collection type.")
         super().__init__(elements)
 
+    def update(self):
+        if self._type == matplotlib.collections.PathCollection:
+            self._artist_collection.set_offsets([el.get_data() for el in self])
+
     def _set_attribute(self, attribute, value):
         if type(value) in [int, float]:
             value = [value for _ in self]
@@ -115,7 +119,6 @@ class ElementSeries(list):
             raise ValueError("Length of input values does not match length of ElementSeries.")
         for i, v in enumerate(value):
             getattr(self[i], "set_"+attribute)(v)
-
 
     def get_alpha(self):
         return [e.get_alpha() for e in self]
@@ -128,8 +131,6 @@ class ElementSeries(list):
 
     def set_data(self, data):
         self._set_attribute("data", data)
-        if self._type == matplotlib.collections.PathCollection:
-            self._artist_collection.set_offsets([el.get_data() for el in self])
 
     def get_scale(self):
         return [e.get_scale() for e in self]
