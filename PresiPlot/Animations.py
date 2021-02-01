@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.animation import FuncAnimation
 import easing_functions as ef
-from PresiPlot.Elements import Element, ElementSeries
+from PresiPlot.Elements import Element, create_element_series
 import itertools
 
 
@@ -86,7 +86,7 @@ class FadeIn(AlphaAnimation):
 
 class SeriesAnimation:
     def __init__(self, artists, start_time, duration, easer, animation_class, horizontal=False, **kwargs):
-        self.elements = ElementSeries(artists, horizontal=horizontal)
+        self.elements = create_element_series(artists, horizontal=horizontal)
         self._artists = self.elements.artists
         if type(duration) in [int, float]:
             duration = [duration for _ in self.elements]
