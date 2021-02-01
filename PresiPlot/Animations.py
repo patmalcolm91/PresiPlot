@@ -105,6 +105,11 @@ class SeriesAnimation:
 
 
 if __name__ == "__main__":
+    pts1, = plt.plot([1, 2, 3, 4], [3, 2, 5, 8], "-o", lw=10, ms=25)
+    scatter_anim = SeriesAnimation(pts1, 0, 100, ef.ElasticEaseOut(), Expand)
+    a = FuncAnimation(plt.gcf(), scatter_anim.tick, frames=500, interval=20, blit=True, repeat=False)
+    plt.show()
+
     bars = plt.bar([1, 2, 3, 4], [3, 2, 5, 8])
     bar_anim = SeriesAnimation(bars, Stagger(0, 20), 100, ef.ElasticEaseOut(), Grow)
     a = FuncAnimation(plt.gcf(), bar_anim.tick, frames=500, interval=20, blit=True, repeat=False)

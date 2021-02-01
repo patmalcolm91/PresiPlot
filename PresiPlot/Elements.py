@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.container
 import matplotlib.collections
+import matplotlib.lines
 from matplotlib.colors import to_rgba
 import warnings
 
@@ -76,6 +77,7 @@ class DummyElement(Element):
         self._alpha = None
         self._data = None
         self._scale = None
+        self._ref_sizes = None
 
     def get_alpha(self):
         return self._alpha
@@ -94,6 +96,12 @@ class DummyElement(Element):
 
     def set_scale(self, scale):
         self._scale = scale
+
+    def set_reference_sizes(self, *sizes):
+        self._ref_sizes = sizes
+
+    def get_reference_sizes(self):
+        return self._ref_sizes
 
 
 class DummyElement1D(DummyElement):
@@ -137,6 +145,20 @@ class ElementSeries(list):
                 el.set_scale(sizes[i])
                 el.set_alpha(alphas[i])
             self.artists = [artist_collection]
+        elif self._type == matplotlib.lines.Line2D:
+            data = list(zip(*artist_collection.get_data()))
+            alpha = artist_collection.get_alpha()
+            ms = artist_collection.get_markersize()
+            lw = artist_collection.get_linewidth()
+            if alpha is None:
+                alpha = 1
+            elements = [DummyElement1D(horizontal) for _ in range(len(data))]
+            for d, el in zip(data, elements):
+                el.set_full_data(list(d))
+                el.set_alpha(alpha)
+                el.set_scale(1)
+                el.set_reference_sizes(ms, lw)
+            self.artists = [artist_collection]
         else:
             raise NotImplementedError("Unsupported artist collection type.")
         super().__init__(elements)
@@ -150,6 +172,20 @@ class ElementSeries(list):
                 colors = [colors[0] for _ in self]
             new_colors = [to_rgba(c, max(0, min(1, el.get_alpha()))) for el, c in zip(self, colors)]
             self._artist_collection.set_color(new_colors)
+        elif self._type == matplotlib.lines.Line2D:
+            data = zip(*[el.get_full_data() for el in self])
+            self._artist_collection.set_data(*data)
+            alphas = set([el.get_alpha() for el in self])
+            if len(alphas) != 1:
+                warnings.warn("Staggered alpha animation not supported by Line2D artist type.")
+            self._artist_collection.set_alpha(next(iter(alphas)))
+            scales = set([el.get_scale() for el in self])
+            if len(scales) != 1:
+                warnings.warn("Staggered scale animation not supported by Line2D artist type.")
+            scale = next(iter(scales))
+            ms, lw = self[0].get_reference_sizes()
+            self._artist_collection.set_markersize(ms*scale)
+            self._artist_collection.set_linewidth(lw*scale)
 
     def _set_attribute(self, attribute, value):
         if type(value) in [int, float]:
